@@ -1,0 +1,95 @@
+#include <SFML/Graphics.hpp>
+#define WIDTH_WIN 1920
+#define HEIGHT_WIN 1080
+#define SPARKLY_AMOUNT 100
+
+class ParticleEmitter {
+public:
+  float x = WIDTH_WIN / 2;
+  float y = HEIGHT_WIN / 2;
+  struct Particle {
+    float x = 0;
+    float y = 0;
+    float dx = 0;
+    float dy = 0;
+    long life = 0;
+  };
+  std::vector<Particle*> particles;
+  ParticleEmitter() {
+    
+  }
+  void updateParticle(Particle* p) {
+    p->x += p->dx;
+    p->y += p->dy;
+    p->life++;
+    if ((p->x < 0.0f) || (p->x > 1920.0f)) {
+      p->x = (p->x < 0.0f ? 0.0f : 1920.0f);
+      p->dx = -(p->dx);
+    }
+    if ((p->y < 0) || (p->y > 1920)) {
+      p->y = (p->y < 0 ? 0 : 1920);
+      p->dy = -(p->dy);
+    }
+  }
+  void tickParticles() {
+    for (unsigned int i = 0; i < particles.size(); i++) {
+      updateParticle(particles[i]);
+    }
+  }
+  void addParticle() {
+    Particle* tempParticle = new Particle();
+    tempParticle->x = x;
+    tempParticle->y = y;
+    tempParticle->dx = (((float)(rand()-(RAND_MAX/2)))/RAND_MAX) * 20;
+    tempParticle->dy = (((float)(rand()-(RAND_MAX/2)))/RAND_MAX) * 20;
+    particles.push_back(tempParticle);
+  }
+  void removeParticle(unsigned int index) {
+
+  }
+};
+
+int main() {
+  sf::RenderWindow window(sf::VideoMode(WIDTH_WIN, HEIGHT_WIN), "Powder");
+  ParticleEmitter emitter = ParticleEmitter();
+  while (window.isOpen()) {
+    sf::Event e;
+    while (window.pollEvent(e)) {
+      if (e.type == sf::Event::Closed) {
+	window.close();
+      }
+      else if (e.type == sf::Event::MouseButtonPressed) {
+	if (e.mouseButton.button == sf::Mouse::Left) {
+	  //handle it
+	}
+      }
+    }
+    window.clear();
+    float mouseX = sf::Mouse::getPosition(window).x;
+    float mouseY = sf::Mouse::getPosition(window).y;
+    float mouseMagnitude = std::sqrt(mouseX * mouseX + mouseY * mouseY);
+    float normalizedX = mouseX / mouseMagnitude;
+    float normalizedY = mouseY / mouseMagnitude;
+    //draw aimy thing
+    sf::Vertex aimLine[] = {
+      sf::Vertex(sf::Vector2f(WIDTH_WIN / 2, HEIGHT_WIN / 2)),
+      sf::Vertex(sf::Vector2f((WIDTH_WIN / 2) + normalizedX, (HEIGHT_WIN / 2) + normalizedY))
+    };
+    window.draw(aimLine, 2, sf::Lines);
+    if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+      emitter.x = mouseX;
+      emitter.y = mouseY;
+      for (unsigned int i = 0; i < SPARKLY_AMOUNT; i++) {
+	emitter.addParticle();
+      }
+    }
+    emitter.tickParticles();
+    for (unsigned int i = 0; i < emitter.particles.size(); i++) {
+      sf::RectangleShape rect(sf::Vector2f(3,3));
+      rect.setPosition(sf::Vector2f((int)emitter.particles[i]->x, (int)emitter.particles[i]->y));
+      rect.setFillColor(sf::Color(rand()%256,rand()%256,rand()%256));
+      window.draw(rect);
+    }
+    window.display();
+  }
+}

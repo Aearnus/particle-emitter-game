@@ -3,6 +3,22 @@
 #define HEIGHT_WIN 900
 #define SPARKLY_AMOUNT 1
 
+class Enemy {
+public:
+  int life;
+  float x;
+  float y;
+  float speed; //toward center
+  Enemy(int life, float speed) {
+    this->life = life;
+    this->speed = speed;
+  }
+
+  void tick() {
+    
+  }
+};
+
 class ParticleEmitter {
 public:
   float x = WIDTH_WIN / 2;
@@ -82,7 +98,7 @@ int main() {
     window.clear();
     float mouseX = sf::Mouse::getPosition(window).x;
     float mouseY = sf::Mouse::getPosition(window).y;
-    float mouseMagnitude = std::sqrt((mouseX - centerX) * (mouseX - centerX) + (mouseY - centerY) * (mouseY - centerY));
+    float mouseMagnitude = std::hypot(mouseX - centerX, mouseY - centerY);
     float normalizedX = (mouseX - centerX) / mouseMagnitude;
     float normalizedY = (mouseY - centerY) / mouseMagnitude;
     //draw aimy thing

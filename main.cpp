@@ -3,19 +3,32 @@
 #define HEIGHT_WIN 900
 #define SPARKLY_AMOUNT 1
 
+const float centerX = WIDTH_WIN / 2;
+const float centerY = HEIGHT_WIN / 2;
+
+//wikipedia: linear_interpolation
+float lerp(float v0, float v1, float t) {
+  return (1-t)*v0 + t*v1;
+}
+
 class Enemy {
 public:
   int life;
   float x;
   float y;
+  const float width = 100;
+  const float height = 60;
   float speed; //toward center
-  Enemy(int life, float speed) {
+  Enemy(int life, float speed) {    
     this->life = life;
     this->speed = speed;
+    x = WIDTH_WIN * std::cos(((float)rand() * 2 * 3.141) / (float)RAND_MAX);
+    y = WIDTH_WIN * std::cos(((float)rand() * 2 * 3.141) / (float)RAND_MAX);
   }
 
   void tick() {
-    
+    x = lerp(x, centerX, 0.005);
+    y = lerp(y, centerY, 0.005);
   }
 };
 
@@ -79,10 +92,9 @@ public:
 int main() {
   sf::RenderWindow window(sf::VideoMode(WIDTH_WIN, HEIGHT_WIN), "Powder");
   ParticleEmitter emitter = ParticleEmitter();
-  float centerX = WIDTH_WIN / 2;
-  float centerY = HEIGHT_WIN / 2;
   emitter.x = centerX;
   emitter.y = centerY;
+  std::vector<Enemy*> enemies;
   while (window.isOpen()) {
     sf::Event e;
     while (window.pollEvent(e)) {
@@ -96,17 +108,32 @@ int main() {
       }
     }
     window.clear();
+    //draw aim reticule
     float mouseX = sf::Mouse::getPosition(window).x;
     float mouseY = sf::Mouse::getPosition(window).y;
     float mouseMagnitude = std::hypot(mouseX - centerX, mouseY - centerY);
     float normalizedX = (mouseX - centerX) / mouseMagnitude;
     float normalizedY = (mouseY - centerY) / mouseMagnitude;
-    //draw aimy thing
     sf::Vertex aimLine[] = {
       sf::Vertex(sf::Vector2f(WIDTH_WIN / 2, HEIGHT_WIN / 2)),
       sf::Vertex(sf::Vector2f((WIDTH_WIN / 2) + normalizedX * 20, (HEIGHT_WIN / 2) + normalizedY * 20))
     };
     window.draw(aimLine, 2, sf::Lines);
+
+    //spawn, draw and update enemies
+    if (rand() % 32 == 0) {
+      Enemy* tempEnemy = new Enemy(100, 10);
+      enemies.push_back(tempEnemy);
+    }
+    for (unsigned int i = 0; i < enemies.size(); i++) {
+      enemies[i]->tick();
+      sf::RectangleShape enemyRect(sf::Vector2f(enemies[i]->width, enemies[i]->height));
+      enemyRect.setPosition(sf::Vector2f(enemies[i]->x, enemies[i]->y));
+      enemyRect.setFillColor(sf::Color::White);
+      window.draw(enemyRect);
+    }
+    
+    //shoot and draw particles
     if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
       for (unsigned int i = 0; i < SPARKLY_AMOUNT; i++) {
 	emitter.addParticle(normalizedX * 20, normalizedY * 20);
